@@ -2,6 +2,8 @@ package com.lh.study.thread;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -25,14 +27,34 @@ import java.util.concurrent.TimeUnit;
  * - 降低资源消耗，通过重复利用已创建的线程来降低线程创建和销毁造成的消耗。
  * - 提高相应速度，当任务到达时，任务可以不需要的等到线程创建就能立即执行。
  * - 提高线程的可管理性，线程是稀缺资源，如果无限制的创建，不仅仅会消耗系统资源，
- *      还会降低体统的稳定性，使用线程可以进行统一分配，调优和监控。
+ * 还会降低体统的稳定性，使用线程可以进行统一分配，调优和监控。
  *
  * @author huanliu7
  * @date 2019/7/23 11:24
  */
 public class MyThreadPoolDemo {
     public static void main(String[] args) {
-//        ExecutorService threadPool = Executors.newFixedThreadPool(5); //一池5线程
+        ExecutorService threadPool = new ThreadPoolExecutor(2, 5,
+                60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(3),
+                Executors.defaultThreadFactory(), new ThreadPoolExecutor.AbortPolicy());
+
+        try {
+            for (int i = 1; i <= 8; i++) {
+                //模拟10个用户来办理业务，每个用户就是一个来自外部的请求线程
+                threadPool.execute(() -> {
+                    System.out.println(Thread.currentThread().getName() + "\t 办理业务");
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            threadPool.shutdown();
+        }
+
+    }
+
+    private static void threadPoolInit() {
+        //        ExecutorService threadPool = Executors.newFixedThreadPool(5); //一池5线程
 //        ExecutorService threadPool = Executors.newSingleThreadExecutor();//一池1线程
         ExecutorService threadPool = Executors.newCachedThreadPool(); //一池n线程
         try {
@@ -53,6 +75,5 @@ public class MyThreadPoolDemo {
         } finally {
             threadPool.shutdown();
         }
-
     }
 }
